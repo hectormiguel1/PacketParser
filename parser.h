@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <tuple>
 #include <arpa/inet.h>
+#include <endian.h>
 
 using namespace std;
 enum ERROR_CODE {

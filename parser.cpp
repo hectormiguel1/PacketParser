@@ -15,6 +15,13 @@
 
 #define ERROR_RETURN_VAL 0
 
+//Struct used when converting unsigned int base 32 to float.
+//uint32_t is needed to covert from big endian to little endian.
+//union allows us to reinterpret the bits as floats.
+static union {
+    uint32_t from;
+    float to;
+}uint32_to_float;
 
 //Initializes the parser class with a pointer to the packet location (void is used, as unknown type of data)
 parser::parser(void * packerPointer, int packetLength) {
@@ -54,7 +61,7 @@ ERROR_CODE parser::readN(int numToRead) {
  */
 tuple<ERROR_CODE,string> parser::readString() {
     auto [error_code, stringLength] = readUShort();
-    if(stringLength + currentLocationInPacket > length || error_code > NO_ERROR)
+    if(stringLength + currentLocationInPacket >= length || error_code > NO_ERROR)
     {
         if(error_code > NO_ERROR)
         {
@@ -77,7 +84,7 @@ tuple<ERROR_CODE,string> parser::readString() {
  * if length of string exceeds length of packet.
  */
 tuple<ERROR_CODE, short> parser::readShort() {
-    if(currentLocationInPacket + SIZE_OF_SHORT > length)
+    if(currentLocationInPacket + SIZE_OF_SHORT >= length)
     {
         return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
     }
@@ -98,7 +105,7 @@ tuple<ERROR_CODE, short> parser::readShort() {
  * @return: Returns a tuple containing Error Code and int.
  */
 tuple<ERROR_CODE, int> parser::readInt() {
-    if(currentLocationInPacket + SIZE_OF_INT > length)
+    if(currentLocationInPacket + SIZE_OF_INT >= length)
     {
         return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
     } else{
@@ -118,20 +125,43 @@ tuple<ERROR_CODE, int> parser::readInt() {
  * @return: Returns a tuple containing Error Code and int.
  */
 tuple<ERROR_CODE, byte> parser::readByte() {
-    if(currentLocationInPacket + SIZE_OF_BYTE > length)
+    if(currentLocationInPacket + SIZE_OF_BYTE >= length)
     {
         return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,byte(ERROR_RETURN_VAL));
     } else{
         //Messy Code let me explain:
         /*
-         * result char equals packet data (casted to a char pointer) move pointer to currentLocationInPacket
-         * plus the size of the Byte. We then dereference the pointer to get the value at that location.
+         * resultChar = packet data (casted to a char pointer) move pointer to currentLocationInPacket
+         * We then dereference the pointer to get the value at that location.
          */
-        char resultChar = * (((char * ) (packetData)) + (currentLocationInPacket + SIZE_OF_BYTE));
+        char resultChar = * (((char * ) (packetData)) + (currentLocationInPacket));
         //This converts short from big endian to little endian. (ntohl)
         byte finalByte = (byte) (ntohs(resultChar));
+        currentLocationInPacket += SIZE_OF_BYTE;
         return make_tuple(NO_ERROR,finalByte);
     }
 }
+
+/*
+ * This function extracts a float from our current location in the packet.
+ * Converts the float from Big Endian to Little Endian.
+ * @Return: Returns tuple with Error code if eny and the float, ERROR_RETURN_VAL on error.
+ */
+tuple<ERROR_CODE, float> parser::readFloat() {
+    if(currentLocationInPacket + SIZE_OF_FLOAT >= length)
+    {
+        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,float(ERROR_RETURN_VAL));
+    } else{
+        char * startPointPtr = ((char *) packetData) + currentLocationInPacket;
+        uint32_to_float.from = ZERO_INITIALIZER;
+        memcpy(&startPointPtr, &uint32_to_float,SIZE_OF_FLOAT);
+        currentLocationInPacket += SIZE_OF_FLOAT;
+        //This converts short from big endian to little endian. (ntohl)
+        uint32_to_float.from = ntohl(uint32_to_float.from);
+        return make_tuple(NO_ERROR,uint32_to_float.to);
+    }
+}
+
+
 
 
