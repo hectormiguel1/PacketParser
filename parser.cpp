@@ -87,7 +87,7 @@ tuple<ERROR_CODE, short> parser::readShort() {
         memcpy(startPointPtr, &destShort, SIZE_OF_SHORT);
         currentLocationInPacket += SIZE_OF_SHORT;
         //This converts short from big endian to little endian. (ntohl)
-        short finalShort = ntohl(destShort);
+        short finalShort = ntohs(destShort);
 
         return make_tuple(NO_ERROR,finalShort);
     }
@@ -113,12 +113,25 @@ tuple<ERROR_CODE, int> parser::readInt() {
 }
 
 /*
- * This function extracts an int from the current location in the packet.
+ * This function extracts a byte from the current location in the packet.
  * Converts from Big Endian to Little Endian.
  * @return: Returns a tuple containing Error Code and int.
  */
 tuple<ERROR_CODE, byte> parser::readByte() {
-    return tuple<ERROR_CODE, byte>();
+    if(currentLocationInPacket + SIZE_OF_BYTE > length)
+    {
+        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,byte(ERROR_RETURN_VAL));
+    } else{
+        //Messy Code let me explain:
+        /*
+         * result char equals packet data (casted to a char pointer) move pointer to currentLocationInPacket
+         * plus the size of the Byte. We then dereference the pointer to get the value at that location.
+         */
+        char resultChar = * (((char * ) (packetData)) + (currentLocationInPacket + SIZE_OF_BYTE));
+        //This converts short from big endian to little endian. (ntohl)
+        byte finalByte = (byte) (ntohs(resultChar));
+        return make_tuple(NO_ERROR,finalByte);
+    }
 }
 
 
