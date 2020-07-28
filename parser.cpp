@@ -30,7 +30,7 @@ this->length = packetLength;
 this->currentLocationInPacket = ZERO_INITIALIZER;
 }
 
-/*
+/**
  * This function reset the internal pointer into the packet.
  * @Return: Always returns no ERROR.
  */
@@ -39,7 +39,7 @@ ERROR_CODE parser::reset() {
     return NO_ERROR;
 }
 
-/*
+/**
  * this function moves the pointer to the packet n times.
  * @param: int: numToRead, number of bytes to read.
  * @return: Returns NO_ERROR on successful skip, READ_OUT_OF_BOUNDS_ATTEMPTED, if skip lands outside of packet.
@@ -54,7 +54,7 @@ ERROR_CODE parser::readN(int numToRead) {
         return NO_ERROR;
     }
 }
-/*
+/**
  * This functions reads a string from the packet and moves the internal location in the packet by the length of the string
  * @returns: tuple composed of the ERROR_CODE, and a string, NO_ERROR,resulting_string if success,
  *          otherwise, READ_OUT_OF_BOUNDS_ATTEMPTED, errorString if length of string exceeds length of packet.
@@ -77,7 +77,7 @@ tuple<ERROR_CODE,string> parser::readString() {
         return make_tuple(NO_ERROR,resultString);
     }
 }
-/*
+/**
  * This function extracts a short from the packet, it reads from the current location in the packet.
  * Converts the short from Big Endian to Little Endian.
  * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, ERROR_RETURN_VAL
@@ -99,7 +99,7 @@ tuple<ERROR_CODE, short> parser::readShort() {
         return make_tuple(NO_ERROR,finalShort);
     }
 }
-/*
+/**
  * This function extracts an int from the current location in the packet.
  * Converts from Big Endian to Little Endian.
  * @return: Returns a tuple containing Error Code and int.
@@ -119,7 +119,7 @@ tuple<ERROR_CODE, int> parser::readInt() {
     }
 }
 
-/*
+/**
  * This function extracts a byte from the current location in the packet.
  * Converts from Big Endian to Little Endian.
  * @return: Returns a tuple containing Error Code and int.
@@ -142,7 +142,7 @@ tuple<ERROR_CODE, byte> parser::readByte() {
     }
 }
 
-/*
+/**
  * This function extracts a float from our current location in the packet.
  * Converts the float from Big Endian to Little Endian.
  * @Return: Returns tuple with Error code if eny and the float, ERROR_RETURN_VAL on error.
@@ -161,7 +161,7 @@ tuple<ERROR_CODE, float> parser::readFloat() {
         return make_tuple(NO_ERROR,uint32_to_float.to);
     }
 }
-/*
+/**
  * This function extracts a short from the packet, it reads from the current location in the packet.
  * Converts the short from Big Endian to Little Endian.
  * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, 0
@@ -174,13 +174,42 @@ tuple<ERROR_CODE, unsigned short> parser::readUShort() {
     } else{
         char * startPointPtr = ((char *)packetData + currentLocationInPacket);
         uint16_t destShort = ZERO_INITIALIZER;
-        memcpy(startPointPtr, &destShort, SIZE_OF_SHORT);
-        currentLocationInPacket += SIZE_OF_SHORT;
+        memcpy(startPointPtr, &destShort, SIZE_OF_UNSIGNED_SHORT);
+        currentLocationInPacket += SIZE_OF_UNSIGNED_SHORT;
         //This converts short from big endian to little endian. (ntohl)
         unsigned short finalShort = ntohs(destShort);
 
         return make_tuple(NO_ERROR,finalShort);
     }
+}
+
+/**
+ *This function returns the GUID extracted from the current location in the packet.
+ * @return NO_ERROR,GUID on success, READ_OUT_OF_BOUNDS_ATTEMPTED,error_string on failure.
+ */
+tuple<ERROR_CODE, string> parser::readGUID() {
+    if(currentLocationInPacket + SIZE_OF_GID > length)
+    {
+        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,string("Tried to read passed the size of the packet!"));
+    } else{
+        char * startPointPtr = ((char *) packetData + currentLocationInPacket);
+        string resultString(startPointPtr, (currentLocationInPacket + SIZE_OF_GID));
+        currentLocationInPacket += SIZE_OF_GID;
+        return make_tuple(NO_ERROR,resultString);
+    }
+}
+/**
+ * Function to start working on next packet without creating another instance of the class.
+ * Function also reset the location of the internal location indicator.
+ * @param nextPacket : pointer to next packet.
+ * @param packetSize: Size of the new packet.
+ * @return : Always returns NO_ERROR.
+ */
+ERROR_CODE parser::moveToNextPacket(void * nextPacket, int packetSize) {
+    packetData = nextPacket;
+    length = packetSize;
+    reset();
+    return NO_ERROR;
 }
 
 

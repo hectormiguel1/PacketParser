@@ -33,7 +33,7 @@ public:
     tuple<ERROR_CODE,float> readFloat();
     tuple<ERROR_CODE,unsigned short> readUShort();
     tuple<ERROR_CODE,string> readGUID();
-    ERROR_CODE changePacketPointer();
+    ERROR_CODE moveToNextPacket(void *, int);
 };
 
 
