@@ -23,17 +23,19 @@ private:
     int currentLocationInPacket;
 
 public:
-    parser(void *,int);
+    parser(void *,size_t);
     ERROR_CODE reset();
     ERROR_CODE readN(int);
     tuple<ERROR_CODE,string> readString();
     tuple<ERROR_CODE,short> readShort();
     tuple<ERROR_CODE,int> readInt();
-    tuple<ERROR_CODE,byte> readByte();
+    tuple<ERROR_CODE, int8_t> readByte();
+    tuple<ERROR_CODE, uint8_t > readUByte();
     tuple<ERROR_CODE,float> readFloat();
     tuple<ERROR_CODE,unsigned short> readUShort();
     tuple<ERROR_CODE,string> readGUID();
     ERROR_CODE moveToNextPacket(void *, int);
+    int getLengthRemaining();
 };
 
 

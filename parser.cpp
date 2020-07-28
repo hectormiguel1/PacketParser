@@ -24,9 +24,9 @@ static union {
 }uint32_to_float;
 
 //Initializes the parser class with a pointer to the packet location (void is used, as unknown type of data)
-parser::parser(void * packerPointer, int packetLength) {
+parser::parser(void * packerPointer, size_t packetLength) {
 this->packetData = packerPointer;
-this->length = packetLength;
+this->length = packetLength - 1;
 this->currentLocationInPacket = ZERO_INITIALIZER;
 }
 
@@ -124,19 +124,16 @@ tuple<ERROR_CODE, int> parser::readInt() {
  * Converts from Big Endian to Little Endian.
  * @return: Returns a tuple containing Error Code and int.
  */
-tuple<ERROR_CODE, byte> parser::readByte() {
+tuple<ERROR_CODE, int8_t> parser::readByte() {
     if(currentLocationInPacket + SIZE_OF_BYTE >= length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,byte(ERROR_RETURN_VAL));
+        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
     } else{
-        //Messy Code let me explain:
-        /*
-         * resultChar = packet data (casted to a char pointer) move pointer to currentLocationInPacket
-         * We then dereference the pointer to get the value at that location.
-         */
-        char resultChar = * (((char * ) (packetData)) + (currentLocationInPacket));
+        char* startPointPtr = ((char *) packetData) + currentLocationInPacket;
+        uint8_t resultByte = 0;
+        memcpy(startPointPtr,&resultByte,SIZE_OF_BYTE);
         //This converts short from big endian to little endian. (ntohl)
-        byte finalByte = (byte) (ntohs(resultChar));
+        int8_t finalByte = (ntohs(resultByte));
         currentLocationInPacket += SIZE_OF_BYTE;
         return make_tuple(NO_ERROR,finalByte);
     }
@@ -210,6 +207,10 @@ ERROR_CODE parser::moveToNextPacket(void * nextPacket, int packetSize) {
     length = packetSize;
     reset();
     return NO_ERROR;
+}
+
+int parser::getLengthRemaining() {
+    return (length - currentLocationInPacket);
 }
 
 
