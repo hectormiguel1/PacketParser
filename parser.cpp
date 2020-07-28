@@ -80,7 +80,7 @@ tuple<ERROR_CODE,string> parser::readString() {
 /*
  * This function extracts a short from the packet, it reads from the current location in the packet.
  * Converts the short from Big Endian to Little Endian.
- * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, 0
+ * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, ERROR_RETURN_VAL
  * if length of string exceeds length of packet.
  */
 tuple<ERROR_CODE, short> parser::readShort() {
@@ -159,6 +159,27 @@ tuple<ERROR_CODE, float> parser::readFloat() {
         //This converts short from big endian to little endian. (ntohl)
         uint32_to_float.from = ntohl(uint32_to_float.from);
         return make_tuple(NO_ERROR,uint32_to_float.to);
+    }
+}
+/*
+ * This function extracts a short from the packet, it reads from the current location in the packet.
+ * Converts the short from Big Endian to Little Endian.
+ * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, 0
+ * if length of string exceeds length of packet.
+ */
+tuple<ERROR_CODE, unsigned short> parser::readUShort() {
+    if(currentLocationInPacket + SIZE_OF_UNSIGNED_SHORT >= length)
+    {
+        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
+    } else{
+        char * startPointPtr = ((char *)packetData + currentLocationInPacket);
+        uint16_t destShort = ZERO_INITIALIZER;
+        memcpy(startPointPtr, &destShort, SIZE_OF_SHORT);
+        currentLocationInPacket += SIZE_OF_SHORT;
+        //This converts short from big endian to little endian. (ntohl)
+        unsigned short finalShort = ntohs(destShort);
+
+        return make_tuple(NO_ERROR,finalShort);
     }
 }
 
