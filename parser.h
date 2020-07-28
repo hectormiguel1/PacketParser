@@ -11,6 +11,15 @@
 #include <arpa/inet.h>
 #include <endian.h>
 
+#define ZERO_INITIALIZER 0
+#define SIZE_OF_SHORT 2
+#define SIZE_OF_INT 4
+#define SIZE_OF_BYTE 1
+#define SIZE_OF_FLOAT 4
+#define SIZE_OF_UNSIGNED_SHORT 2
+#define SIZE_OF_GID 8
+
+#define ERROR_RETURN_VAL 0
 using namespace std;
 enum ERROR_CODE {
     NO_ERROR, ERROR, READ_OUT_OF_BOUNDS_ATTEMPTED
@@ -26,14 +35,14 @@ public:
     parser(void *,size_t);
     ERROR_CODE reset();
     ERROR_CODE readN(int);
-    tuple<ERROR_CODE,string> readString();
-    tuple<ERROR_CODE,short> readShort();
-    tuple<ERROR_CODE,int> readInt();
-    tuple<ERROR_CODE, int8_t> readByte();
-    tuple<ERROR_CODE, uint8_t > readUByte();
-    tuple<ERROR_CODE,float> readFloat();
-    tuple<ERROR_CODE,unsigned short> readUShort();
-    tuple<ERROR_CODE,string> readGUID();
+    string readString();
+    short readShort();
+    int readInt();
+    int8_t readByte();
+    uint8_t readUByte();
+    float readFloat();
+    unsigned short readUShort();
+    string readGUID();
     ERROR_CODE moveToNextPacket(void *, int);
     int getLengthRemaining();
 };

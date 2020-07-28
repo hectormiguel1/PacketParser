@@ -86,43 +86,5 @@ static const unsigned char pkt15[648] = {
 };
 int main() {
     parser packetParser = parser((void *) pkt15, sizeof(pkt15));
-    auto [error_code, testByte1] = packetParser.readByte();
-    auto [error_code2, testByte2] = packetParser.readByte();
-    while(packetParser.getLengthRemaining() > 0 &  error_code2 <= NO_ERROR &
-    testByte1 != byte('\r') & testByte2 != byte('\xf0')){
-        testByte1 = get<byte>(packetParser.readByte());
-        auto [error_code3,byte3] = packetParser.readByte();
-        error_code2 = error_code3;
-        testByte2 = byte3;
-
-
-        cout << "Test Byte 1: " << hex << (char)testByte1 << endl;
-        cout << "Test Byte 2: " << hex << (char)testByte2 << endl;
-
-        cout << "Remaining Packet size: " << dec << packetParser.getLengthRemaining() << endl;
-    }
-    cout << "Remaining Packet size: " << dec << packetParser.getLengthRemaining() << endl;
-
-    while(packetParser.getLengthRemaining() > 0)
-    {
-        if (packetParser.getLengthRemaining() < 4)
-        {
-            cout << "Last Packet" << endl;
-        }
-        packetParser.readN(4);
-        cout << "Read Short: " << get<short>(packetParser.readShort()) << endl;
-        auto [_error_code, length] = packetParser.readUShort();
-        if(length > packetParser.getLengthRemaining())
-        {
-            cout << "Last Packet!" << endl;
-        }
-        packetParser.readN(length);
-        cout << "Remaining Packet size: " << dec << packetParser.getLengthRemaining() << endl;
-        auto [error_code,control] = packetParser.readByte();
-        auto [__error_code, opCode] = packetParser.readByte();
-        auto [___error_code, unkown] = packetParser.readShort();
-
-        if (control != 0)
-    }
 
 }

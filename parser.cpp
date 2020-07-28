@@ -5,15 +5,7 @@
 #include <cstring>
 #include "parser.h"
 
-#define ZERO_INITIALIZER 0
-#define SIZE_OF_SHORT 2
-#define SIZE_OF_INT 4
-#define SIZE_OF_BYTE 1
-#define SIZE_OF_FLOAT 4
-#define SIZE_OF_UNSIGNED_SHORT 2
-#define SIZE_OF_GID 8
 
-#define ERROR_RETURN_VAL 0
 
 //Struct used when converting unsigned int base 32 to float.
 //uint32_t is needed to covert from big endian to little endian.
@@ -26,7 +18,7 @@ static union {
 //Initializes the parser class with a pointer to the packet location (void is used, as unknown type of data)
 parser::parser(void * packerPointer, size_t packetLength) {
 this->packetData = packerPointer;
-this->length = packetLength - 1;
+this->length = packetLength;
 this->currentLocationInPacket = ZERO_INITIALIZER;
 }
 
@@ -59,22 +51,22 @@ ERROR_CODE parser::readN(int numToRead) {
  * @returns: tuple composed of the ERROR_CODE, and a string, NO_ERROR,resulting_string if success,
  *          otherwise, READ_OUT_OF_BOUNDS_ATTEMPTED, errorString if length of string exceeds length of packet.
  */
-tuple<ERROR_CODE,string> parser::readString() {
+string parser::readString() {
     auto [error_code, stringLength] = readUShort();
     if(stringLength + currentLocationInPacket >= length || error_code > NO_ERROR)
     {
         if(error_code > NO_ERROR)
         {
-            return make_tuple(error_code,string("Error getting size of String"));
+            return string("Error getting size of String");
         } else {
-            return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED, string("Tried to read outside the packet. (current location in packet + string size > packet length"));
+            return string("Tried to read outside the packet. (current location in packet + string size > packet length");
         }
     }
     else {
         char * startPointPtr = ((char *) packetData + currentLocationInPacket);
         string resultString(startPointPtr, (currentLocationInPacket + stringLength));
         currentLocationInPacket += stringLength;
-        return make_tuple(NO_ERROR,resultString);
+        return resultString;
     }
 }
 /**
@@ -83,10 +75,10 @@ tuple<ERROR_CODE,string> parser::readString() {
  * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, ERROR_RETURN_VAL
  * if length of string exceeds length of packet.
  */
-tuple<ERROR_CODE, short> parser::readShort() {
+short parser::readShort() {
     if(currentLocationInPacket + SIZE_OF_SHORT >= length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
+        return ERROR_RETURN_VAL;
     }
     else {
         char * startPointPtr = ((char *)packetData + currentLocationInPacket);
@@ -96,7 +88,7 @@ tuple<ERROR_CODE, short> parser::readShort() {
         //This converts short from big endian to little endian. (ntohl)
         short finalShort = ntohs(destShort);
 
-        return make_tuple(NO_ERROR,finalShort);
+        return finalShort;
     }
 }
 /**
@@ -104,10 +96,10 @@ tuple<ERROR_CODE, short> parser::readShort() {
  * Converts from Big Endian to Little Endian.
  * @return: Returns a tuple containing Error Code and int.
  */
-tuple<ERROR_CODE, int> parser::readInt() {
+int parser::readInt() {
     if(currentLocationInPacket + SIZE_OF_INT >= length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
+        return ERROR_RETURN_VAL;
     } else{
         char * startPointPtr = ((char * ) packetData) + currentLocationInPacket;
         uint32_t destInt = ZERO_INITIALIZER;
@@ -115,7 +107,7 @@ tuple<ERROR_CODE, int> parser::readInt() {
         currentLocationInPacket += SIZE_OF_INT;
         //This converts short from big endian to little endian. (ntohl)
         int finalInt = ntohl(destInt);
-        return make_tuple(NO_ERROR,finalInt);
+        return finalInt;
     }
 }
 
@@ -124,10 +116,10 @@ tuple<ERROR_CODE, int> parser::readInt() {
  * Converts from Big Endian to Little Endian.
  * @return: Returns a tuple containing Error Code and int.
  */
-tuple<ERROR_CODE, int8_t> parser::readByte() {
+int8_t parser::readByte() {
     if(currentLocationInPacket + SIZE_OF_BYTE >= length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
+        return ERROR_RETURN_VAL;
     } else{
         char* startPointPtr = ((char *) packetData) + currentLocationInPacket;
         uint8_t resultByte = 0;
@@ -135,8 +127,26 @@ tuple<ERROR_CODE, int8_t> parser::readByte() {
         //This converts short from big endian to little endian. (ntohl)
         int8_t finalByte = (ntohs(resultByte));
         currentLocationInPacket += SIZE_OF_BYTE;
-        return make_tuple(NO_ERROR,finalByte);
+        return finalByte;
     }
+}
+/**
+ * This function extracts an unsigned byte from the current location in the packet.
+ * Converts from Big Endian to Little Endian.
+ * @return: Returns a tuple containing Error Code and int.
+ */
+uint8_t parser::readUByte() {
+    if(currentLocationInPacket + SIZE_OF_BYTE >= length)
+    {
+        return ERROR_RETURN_VAL;
+    } else{
+        char* startPointPtr = ((char *) packetData) + currentLocationInPacket;
+        uint8_t resultByte = 0;
+        memcpy(startPointPtr,&resultByte,SIZE_OF_BYTE);
+        //This converts short from big endian to little endian. (ntohl)
+        uint8_t finalByte = (ntohs(resultByte));
+        currentLocationInPacket += SIZE_OF_BYTE;
+        return finalByte;
 }
 
 /**
@@ -144,10 +154,10 @@ tuple<ERROR_CODE, int8_t> parser::readByte() {
  * Converts the float from Big Endian to Little Endian.
  * @Return: Returns tuple with Error code if eny and the float, ERROR_RETURN_VAL on error.
  */
-tuple<ERROR_CODE, float> parser::readFloat() {
+float parser::readFloat() {
     if(currentLocationInPacket + SIZE_OF_FLOAT >= length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,float(ERROR_RETURN_VAL));
+        return float(ERROR_RETURN_VAL);
     } else{
         char * startPointPtr = ((char *) packetData) + currentLocationInPacket;
         uint32_to_float.from = ZERO_INITIALIZER;
@@ -155,7 +165,7 @@ tuple<ERROR_CODE, float> parser::readFloat() {
         currentLocationInPacket += SIZE_OF_FLOAT;
         //This converts short from big endian to little endian. (ntohl)
         uint32_to_float.from = ntohl(uint32_to_float.from);
-        return make_tuple(NO_ERROR,uint32_to_float.to);
+        return uint32_to_float.to;
     }
 }
 /**
@@ -164,10 +174,10 @@ tuple<ERROR_CODE, float> parser::readFloat() {
  * @return: tuple<ERROR_CODE, short>, NO_ERROR,short on success, READ_OUT_OF_BOUNDS_ATTEMPTED, 0
  * if length of string exceeds length of packet.
  */
-tuple<ERROR_CODE, unsigned short> parser::readUShort() {
+unsigned short parser::readUShort() {
     if(currentLocationInPacket + SIZE_OF_UNSIGNED_SHORT >= length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,ERROR_RETURN_VAL);
+        return ERROR_RETURN_VAL;
     } else{
         char * startPointPtr = ((char *)packetData + currentLocationInPacket);
         uint16_t destShort = ZERO_INITIALIZER;
@@ -176,7 +186,7 @@ tuple<ERROR_CODE, unsigned short> parser::readUShort() {
         //This converts short from big endian to little endian. (ntohl)
         unsigned short finalShort = ntohs(destShort);
 
-        return make_tuple(NO_ERROR,finalShort);
+        return finalShort;
     }
 }
 
@@ -184,15 +194,15 @@ tuple<ERROR_CODE, unsigned short> parser::readUShort() {
  *This function returns the GUID extracted from the current location in the packet.
  * @return NO_ERROR,GUID on success, READ_OUT_OF_BOUNDS_ATTEMPTED,error_string on failure.
  */
-tuple<ERROR_CODE, string> parser::readGUID() {
+string parser::readGUID() {
     if(currentLocationInPacket + SIZE_OF_GID > length)
     {
-        return make_tuple(READ_OUT_OF_BOUNDS_ATTEMPTED,string("Tried to read passed the size of the packet!"));
+        return string("Tried to read passed the size of the packet!");
     } else{
         char * startPointPtr = ((char *) packetData + currentLocationInPacket);
         string resultString(startPointPtr, (currentLocationInPacket + SIZE_OF_GID));
         currentLocationInPacket += SIZE_OF_GID;
-        return make_tuple(NO_ERROR,resultString);
+        return resultString);
     }
 }
 /**
@@ -209,9 +219,15 @@ ERROR_CODE parser::moveToNextPacket(void * nextPacket, int packetSize) {
     return NO_ERROR;
 }
 
+/**
+ * Function returns remaining space in packet from the current pointer to the end of the packet
+ * @return int remaining space in packet.
+ */
 int parser::getLengthRemaining() {
     return (length - currentLocationInPacket);
 }
+
+
 
 
 
